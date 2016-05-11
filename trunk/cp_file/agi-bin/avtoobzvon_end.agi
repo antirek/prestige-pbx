@@ -1,0 +1,37 @@
+#!/usr/bin/perl -w
+use Asterisk::AGI;
+use DBI;
+
+$AGI = new Asterisk::AGI;
+my %input = $AGI->ReadParse();
+
+open ( CONFIG , '< /var/lib/asterisk/agi-bin/var.txt');
+ while (defined (my $variable = <CONFIG>)) {
+    chomp($variable);
+    ($key,$val)=split('=',$variable);
+    if ( $key eq 'asteriskmysql'){  $asteriskmysql = $val;}
+    if ( $key eq 'asteriskpasswd'){  $asteriskpasswd = $val;}
+    if ( $key eq 'asteriskdbname'){  $asteriskdbname = $val; }
+ }
+close(CONFIG);
+
+my $dbh = DBI->connect("DBI:mysql:$asteriskdbname:localhost", "$asteriskmysql","$asteriskpasswd") or $AGI->noop("No connect to mysql");
+
+my  $rec_file = $AGI->get_variable('REC_FILE');
+my  $dst = $AGI->get_variable('EXTEN');
+my  $id = $AGI->get_variable('id');
+
+my  $time1 = $AGI->get_variable('time1');
+my  $time2 = $AGI->get_variable('time2');
+my  $billsec=$time2-$time1;
+
+unless ( defined($rec_file) ) {
+    $rec_file="0";
+#    print "no file";
+}
+
+my $query="update masscall set time_describe=now(), wav=$rec_file, ready=2, billsec=$billsec where id=$id";
+$sth = $dbh->prepare("$query");
+$sth->execute;
+
+exit 0;

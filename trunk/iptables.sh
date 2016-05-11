@@ -1,0 +1,54 @@
+#!/bin/sh
+###########################################################################
+IPTABLES='/sbin/iptables'
+#lo
+ADMIN_IP0='127.0.0.1'
+
+ADMIN_IP1=''
+ADMIN_IP2=''
+ADMIN_IP3=''
+
+OFFICE1=''
+OFFICE1=''
+OFFICE1=''
+
+TRUNK1=''
+TRUNK2=''
+TRUNK3=''
+
+$IPTABLES -F INPUT
+$IPTABLES -F OUTPUT
+$IPTABLES -F FORWARD
+
+$IPTABLES -t nat -F  PREROUTING
+$IPTABLES -t nat -F POSTROUTING
+
+$IPTABLES -P INPUT DROP
+#$IPTABLES -P INPUT ACCEPT
+$IPTABLES -P OUTPUT ACCEPT
+$IPTABLES -P FORWARD ACCEPT
+
+$IPTABLES -A INPUT -p all  -s $ADMIN_IP0 -j ACCEPT
+
+$IPTABLES -A INPUT -p all  -s $ADMIN_IP1 -j ACCEPT
+$IPTABLES -A INPUT -p all  -s $ADMIN_IP2 -j ACCEPT
+$IPTABLES -A INPUT -p all  -s $ADMIN_IP3 -j ACCEPT
+
+$IPTABLES -A INPUT -p all  -s $OFFICE1 -j ACCEPT
+$IPTABLES -A INPUT -p all  -s $OFFICE2 -j ACCEPT
+$IPTABLES -A INPUT -p all  -s $OFFICE3 -j ACCEPT
+
+$IPTABLES -A INPUT -p all  -s $TRUNK1 -j ACCEPT
+$IPTABLES -A INPUT -p all  -s $TRUNK2 -j ACCEPT
+$IPTABLES -A INPUT -p all  -s $TRUNK3 -j ACCEPT
+
+
+$IPTABLES -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+$IPTABLES -A INPUT -p tcp  -m multiport --destination-port 7222,5433 -j ACCEPT
+$IPTABLES -A INPUT -p udp  -m multiport --destination-port 5433,10000:20000 -j ACCEPT
+
+$IPTABLES -A INPUT -p tcp  -m multiport --destination-port 25,53,80,110,111,139,323,445,979,3306,5060,5038 -j DROP
+
+$IPTABLES -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+

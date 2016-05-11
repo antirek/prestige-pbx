@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+my $wav_convert="/usr/local/bin/2wav2stereo.sh";
+
+use Asterisk::AGI;
+$AGI = new Asterisk::AGI;
+my %input = $AGI->ReadParse();
+
+$uniqueid = $AGI->get_variable('CDR(uniqueid)');
+
+$AGI->set_variable("MONITOR_EXEC", $wav_convert);
+$AGI->set_variable("SOUNDFILE", $uniqueid);
+$AGI->exec("Monitor","wav,$uniqueid,m");
+$AGI->set_variable("AUDIOHOOK_INHERIT(MixMonitor)","yes");
+
+exit 0;
+

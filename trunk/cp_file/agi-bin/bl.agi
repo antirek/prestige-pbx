@@ -1,0 +1,50 @@
+#!/usr/bin/perl -w
+use Asterisk::AGI;
+use DBI;
+
+$AGI = new Asterisk::AGI;
+my %input = $AGI->ReadParse();
+
+open ( CONFIG , '< /var/lib/asterisk/agi-bin/var.txt');
+ while (defined (my $variable = <CONFIG>)) {
+    chomp($variable);
+    ($key,$val)=split('=',$variable);
+    if ( $key eq 'asteriskmysql'){  $asteriskmysql = $val;}
+    if ( $key eq 'asteriskpasswd'){  $asteriskpasswd = $val;}
+    if ( $key eq 'asteriskdbname'){  $asteriskdbname = $val; }
+ }
+close(CONFIG);
+
+my $dbh = DBI->connect("DBI:mysql:$asteriskdbname:localhost", "$asteriskmysql","$asteriskpasswd") or $AGI->noop("No connect to mysql");
+
+#while ( my ($key, $value) = each(%input) ) {
+#    $AGI->noop("!!!! $key $value !!! ");
+#}
+
+my $src1 = $input{'callerid'};
+$src1 =~ /\d(\d+)$/;
+$number1=$1;
+
+my $src2 = $input{'calleridname'};
+$src2 =~ /\d(\d+)$/;
+$number2=$1;
+
+#my  $src = $AGI->get_variable('SIPURI');
+##$src =~ /sip:\d(\d+)\@.+$/;
+
+my $query="select count(*) from bl where number like '\%$number1\%' or number like '\%$number2\%' and number is not NULL";
+
+
+$sth = $dbh->prepare("$query");
+$sth->execute;
+$ref=$sth->fetchrow_arrayref;
+
+#$AGI->noop("$query !!!!!!!!!!!!");
+
+if ( $$ref[0] == "1" ) {
+ $AGI->answer();
+ $AGI->set_variable("CDR(Userfield)", "blacklist");
+ $AGI->hangup();
+}
+
+

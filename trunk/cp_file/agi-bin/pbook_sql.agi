@@ -1,0 +1,53 @@
+#!/usr/bin/perl -w
+use Asterisk::AGI;
+use DBI;
+
+$AGI = new Asterisk::AGI;
+my %input = $AGI->ReadParse();
+
+
+open ( CONFIG , '< /var/lib/asterisk/agi-bin/var.txt');
+ while (defined (my $variable = <CONFIG>)) {
+    chomp($variable);
+    ($key,$val)=split('=',$variable);
+     if ( $key eq 'asteriskmysql'){  $asteriskmysql = $val;}
+     if ( $key eq 'asteriskpasswd'){  $asteriskpasswd = $val;}
+     if ( $key eq 'asteriskdbname'){  $asteriskdbname = $val; }
+ }
+close(CONFIG);
+
+
+my $src1 = $AGI->get_variable('CALLERID(num)');
+my $src2 = $AGI->get_variable('CALLERID(name)');
+my $local_call = $AGI->get_variable('local_call');
+
+$src1 =~ /.\d(\d+)$/;
+$number1=$1;
+
+my $src2 = $input{'calleridname'};
+$src2 =~ /.\d(\d+)$/;
+$number2=$1;
+
+
+#$AGI->noop("!!!!!!!!!!!!!!!!!!!! ");
+my $dbh = DBI->connect("DBI:mysql:$asteriskdbname:localhost", "$asteriskmysql","$asteriskpasswd") or $AGI->noop("No connect to mysql");
+
+if ( $local_call=1 ) {
+    $sth = $dbh->prepare("select name from pbook where calld=\"$src1\"");
+#    $AGI->noop("select name from pbook where calld=$src1");
+    } else {
+    $sth = $dbh->prepare("select name from pbook where calld like\"\%$number1\" or calld like\"\%$number2\"");
+#    $AGI->noop("select name from pbook where calld like\"\%$src1\" or calld like\"\%$src2\"");
+    }
+
+$sth->execute;
+while ($ref =  $sth->fetchrow_arrayref) {
+#  $name=$$ref[0];
+  $AGI->set_variable("CALLERID(name)", "$$ref[0]");
+ }
+
+#$AGI->set_variable("CALLERID(name)", "$name");
+#$AGI->set_variable("rus_name", $name);
+
+
+exit 0;

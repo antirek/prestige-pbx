@@ -1,0 +1,6 @@
+ENTRY "/var/www/html" URL "/var/www/html"
+ENTRY "/var/lib/asterisk" URL "/var/lib/asterisk"
+ENTRY "/var/lib/asterisk/sounds" URL "/var/lib/asterisk/sounds"
+ENTRY "/etc/httpd" URL "/etc/httpd"
+ENTRY "/etc/asterisk" URL "/etc/asterisk"
+ENTRY "/var/spool/asterisk/outgoing" URL "/var/spool/asterisk/outgoing"

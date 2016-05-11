@@ -1,0 +1,3 @@
+asteriskmysql=asterisk
+asteriskpasswd=sqlpasswordasterisk
+asteriskdbname=asterisk

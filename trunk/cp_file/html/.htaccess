@@ -1,0 +1,4 @@
+AuthName "The Catalogue on reconstructions, entry for debugging only. We Bring their own apologies an administration" 
+AuthType Basic
+AuthUserFile  /var/www/html/.htpasswd
+require valid-user

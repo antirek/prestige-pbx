@@ -1,0 +1,54 @@
+#!/usr/bin/perl -w
+use Asterisk::AGI;
+use DBI;
+
+open ( CONFIG , '< /var/lib/asterisk/agi-bin/var.txt');
+ while (defined (my $variable = <CONFIG>)) {
+     chomp($variable);
+     ($key,$val)=split('=',$variable);
+     if ( $key eq 'asteriskmysql'){  $asteriskmysql = $val;}
+     if ( $key eq 'asteriskpasswd'){  $asteriskpasswd = $val;}
+     if ( $key eq 'asteriskdbname'){  $asteriskdbname = $val; }
+  }
+close(CONFIG);
+
+
+$AGI = new Asterisk::AGI;
+my %input = $AGI->ReadParse();
+my $dbh = DBI->connect("DBI:mysql:$asteriskdbname:localhost", "$asteriskmysql","$asteriskpasswd") or $AGI->noop("No connect to mysql");
+
+$src = $AGI->get_variable('CALLERID(num)');
+my $query="select dst from cdr where src=\"$src\" order by calldate desc limit 1";
+
+
+
+$sth = $dbh->prepare("$query");
+$sth->execute;
+$ref=$sth->fetchrow_arrayref;
+$$ref[0] =~ /\d\d(\d+)/;
+$exten=$1;
+
+$rnd=int(rand(1000000));
+
+
+$AGI->set_callerid($src);
+
+$AGI->exec("NoOp","aaaa $src | $exten");
+
+$myfile = "/tmp/$rnd.call"; 
+open (FILE, ">$myfile");
+print FILE "Channel:Local/$exten\@auto_call_start\n";
+print FILE "CallerID: $exten\n";
+print FILE "MaxRetries: 50\n";
+print FILE "RetryTime: 60\n";
+print FILE "WaitTime: 120\n";
+print FILE "Context: auto_call_bridge\n";
+print FILE "Extension: s\n";
+print FILE "Priority: 1\n";
+print FILE "set: src=$src\n";
+close (FILE);
+
+system ("mv $myfile /var/spool/asterisk/outgoing");
+
+$AGI->exec("NoOp","end $src");
+

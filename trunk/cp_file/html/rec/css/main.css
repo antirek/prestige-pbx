@@ -1,0 +1,16 @@
+td {
+    border-width:1px;
+    border-style:solid;
+    padding:3px 10px;
+    text-align:left;
+    vertical-align:top;
+}
+table {
+    border-width:2px;
+    border-style:solid;
+    border-collapse:collapse;
+    margin:5px 5px 10px;
+body {
+    font-family:Verdana,Tahoma,"BitStream vera Sans",Arial,Helvetica,sans-serif;
+    font-size:12px;
+}
